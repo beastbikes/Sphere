@@ -1,21 +1,14 @@
 package com.beastbikes.logging.binding.logcat;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.Test;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import com.beastbikes.logging.Logger;
 import com.beastbikes.logging.LoggerFactory;
 
-public class LogcatLoggerFactoryTest extends TestCase {
-
-    public static Test suite() {
-        return new TestSuite(LogcatLoggerFactoryTest.class);
-    }
-
-    public LogcatLoggerFactoryTest(final String testName) {
-        super(testName);
-    }
+public class LogcatLoggerFactoryTest {
 
     public void testGetLogger() {
         final Logger logger = LoggerFactory.getLogger("Test");

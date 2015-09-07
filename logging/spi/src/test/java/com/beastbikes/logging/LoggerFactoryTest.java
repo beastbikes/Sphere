@@ -3,20 +3,14 @@ package com.beastbikes.logging;
 import java.io.PrintStream;
 import java.io.ByteArrayOutputStream;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.Test;
 
-public class LoggerFactoryTest extends TestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
-    public static Test suite() {
-        return new TestSuite(LoggerFactoryTest.class);
-    }
+public class LoggerFactoryTest {
 
-    public LoggerFactoryTest(final String testName) {
-        super(testName);
-    }
-
+    @Test
     public void testGetLogger() {
         final PrintStream stdout = System.out;
         final PrintStream stderr = System.err;
