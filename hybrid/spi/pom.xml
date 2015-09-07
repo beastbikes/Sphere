@@ -22,10 +22,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
+      <groupId>com.beastbikes</groupId>
+      <artifactId>sphere-logging-spi</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>android</artifactId>
+      <version>4.0.1.2</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>
