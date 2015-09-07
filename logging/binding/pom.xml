@@ -1,0 +1,22 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.beastbikes</groupId>
+    <artifactId>sphere-logging</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>sphere-logging-binding</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>Sphere Logging SPI Binding Module</name>
+  <description>The sphere logging SPI binding</description>
+  <url>https://github.com/beastbikes/sphere</url>
+
+  <modules>
+    <module>logcat</module>
+  </modules>
+</project>
