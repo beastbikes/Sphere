@@ -31,17 +31,19 @@ class DefaultWebRequestInterceptor extends AbstractWebRequestInterceptor {
     public WebResourceResponse intercept(final WebView view, final Uri uri, final Map<String, String> headers) {
         final String url = uri.toString();
         if (!URLUtil.isNetworkUrl(url)) {
+            logger.warn("Non-HTTP request ignored: " + url);
             return null;
         }
 
         try {
             final Class<?> clazz = Class.forName("android.net.http.HttpResponseCache");
             final Method getDefault = clazz.getMethod("getDefault");
-            if (null == getDefault.invoke(clazz)) {
-                return null;
+            final Method getInstalled = clazz.getMethod("getInstalled");
+            if (null == getDefault.invoke(clazz) && null == getInstalled.invoke(clazz)) {
+                throw new NullPointerException("Neither default HttpResponseCache nor installed HttpResponseCache is available");
             }
         } catch (final Exception e) {
-            logger.warn("The default HTTP response cache not found", e);
+            logger.warn("No HTTP response cache found", e);
         }
 
         final Locale locale = Locale.getDefault();
