@@ -1,0 +1,20 @@
+package com.beastbikes.restful;
+
+/**
+ * The concept of the RESTful API invocation
+ *
+ * @author johnsonlee
+ * @since 1.0.0
+ */
+interface Invocation {
+
+    /**
+     * Invoke the RESTful API with the specified arguments
+     * 
+     * @param args
+     *           The arguments that the RESTful API required.
+     * @return The invocation result
+     */
+    public Object invoke(final Object... args);
+
+}

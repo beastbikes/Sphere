@@ -57,6 +57,7 @@
   <modules>
     <module>logging</module>
     <module>hybrid</module>
+    <module>restful</module>
   </modules>
 
   <dependencies>
