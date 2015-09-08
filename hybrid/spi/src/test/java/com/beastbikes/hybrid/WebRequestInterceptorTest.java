@@ -31,7 +31,7 @@ public class WebRequestInterceptorTest {
     @Test
     public void interceptWithDefault() {
         final Uri uri = Uri.parse("http://beastbikes.com");
-        final Activity activity = Robolectric.setupActivity(MockActivity.class);
+        final Activity activity = Robolectric.setupActivity(Activity.class);
         assertTrue(null != activity);
 
         final File dir = new File(activity.getCacheDir(), "http");
