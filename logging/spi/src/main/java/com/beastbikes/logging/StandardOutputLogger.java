@@ -21,7 +21,7 @@ class StandardOutputLogger extends AbstractLogger {
 
     @Override
     public void trace(final String msg, final Object... args) {
-        this.printWithPrefix(this.stdout, "V", msg, args).flush();
+        this.printWithPrefix(this.stdout, "V", msg, args);
     }
 
     @Override
@@ -31,7 +31,7 @@ class StandardOutputLogger extends AbstractLogger {
 
     @Override
     public void debug(final String msg, final Object... args) {
-        this.printWithPrefix(this.stdout, "D", msg, args).flush();
+        this.printWithPrefix(this.stdout, "D", msg, args);
     }
 
     @Override
@@ -41,7 +41,7 @@ class StandardOutputLogger extends AbstractLogger {
 
     @Override
     public void info(final String msg, final Object... args) {
-        this.printWithPrefix(this.stdout, "I", msg, args).flush();
+        this.printWithPrefix(this.stdout, "I", msg, args);
     }
 
     @Override
@@ -51,7 +51,7 @@ class StandardOutputLogger extends AbstractLogger {
 
     @Override
     public void warn(final String msg, final Object... args) {
-        this.printWithPrefix(this.stdout, "W", msg, args).flush();
+        this.printWithPrefix(this.stdout, "W", msg, args);
     }
 
     @Override
@@ -61,11 +61,11 @@ class StandardOutputLogger extends AbstractLogger {
 
     @Override
     public void error(final String msg, final Object... args) {
-        this.printWithPrefix(this.stderr, "E", msg, args).flush();
+        this.printWithPrefix(this.stderr, "E", msg, args);
     }
 
     private final PrintWriter printWithPrefix(final PrintWriter pw, final String prefix, final String msg, final Object... args) {
-        pw.append(prefix).append('/').append(this.getName()).append('\t').format(msg, args).flush();
+        pw.append(prefix).append('/').append(this.getName()).append('\t').format(msg, args).println();
         return pw;
     }
 

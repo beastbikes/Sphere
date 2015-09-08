@@ -27,35 +27,35 @@ public class LoggerFactoryTest {
 
         bufout.reset();
         logger.trace("Hello, Sphere!");
-        assertEquals("V/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("V/Test\tHello, Sphere!\n", bufout.toString());
 
         bufout.reset();
         logger.trace("Hello, %s!", "Sphere");
-        assertEquals("V/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("V/Test\tHello, Sphere!\n", bufout.toString());
 
         bufout.reset();
         logger.info("Hello, Sphere!");
-        assertEquals("I/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("I/Test\tHello, Sphere!\n", bufout.toString());
 
         bufout.reset();
         logger.info("Hello, %s!", "Sphere");
-        assertEquals("I/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("I/Test\tHello, Sphere!\n", bufout.toString());
 
         bufout.reset();
         logger.warn("Hello, Sphere!");
-        assertEquals("W/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("W/Test\tHello, Sphere!\n", bufout.toString());
 
         bufout.reset();
         logger.warn("Hello, %s!", "Sphere");
-        assertEquals("W/Test\tHello, Sphere!", bufout.toString());
+        assertEquals("W/Test\tHello, Sphere!\n", bufout.toString());
 
         buferr.reset();
         logger.error("Hello, Sphere!");
-        assertEquals("E/Test\tHello, Sphere!", buferr.toString());
+        assertEquals("E/Test\tHello, Sphere!\n", buferr.toString());
 
         buferr.reset();
         logger.error("Hello, %s!", "Sphere");
-        assertEquals("E/Test\tHello, Sphere!", buferr.toString());
+        assertEquals("E/Test\tHello, Sphere!\n", buferr.toString());
 
         System.setOut(stdout);
         System.setErr(stderr);
