@@ -11,7 +11,8 @@
   <groupId>com.beastbikes</groupId>
   <artifactId>sphere-restful</artifactId>
   <version>1.0.0</version>
-  <name>restful</name>
+  <name>Sphere RESTful Client Module</name>
+  <description>The sphere RESTful client framework</description>
   <url>https://github.com/beastbikes/sphere</url>
 
   <properties>
