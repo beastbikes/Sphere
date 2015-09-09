@@ -14,7 +14,8 @@ interface Invocation {
      * @param args
      *           The arguments that the RESTful API required.
      * @return The invocation result
+     * @throws InvocationException
      */
-    public Object invoke(final Object... args);
+    public Object invoke(final Object... args) throws InvocationException;
 
 }

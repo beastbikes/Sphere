@@ -14,12 +14,12 @@ import org.robolectric.RobolectricTestRunner;
 
 import static junit.framework.Assert.assertTrue;
 
-@Path("/")
+@Path("/functions")
 interface SimpleServiceStub extends ServiceStub {
 
     @HttpGet
     @Path("/hello")
-    void hello();
+    Object hello();
 
 }
 
@@ -33,10 +33,12 @@ public class ServiceStubFactoryTest {
         assertTrue(null != context);
 
         final ServiceStubFactory factory = new ServiceStubFactory(context);
-        final SimpleServiceStub stub = factory.create(SimpleServiceStub.class, "http://beastbikes.com");
+        final SimpleServiceStub stub = factory.create(SimpleServiceStub.class, "http://beastbikes.com/1.1");
         assertTrue(null != stub);
 
-        stub.hello();
+        final Object result = stub.hello();
+        System.out.println(result);
+        assertTrue(null != result);
     }
 
 }
