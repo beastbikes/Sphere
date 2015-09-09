@@ -2,6 +2,7 @@ package com.beastbikes.restful;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,7 +11,11 @@ import java.net.URISyntaxException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -18,11 +23,15 @@ import android.net.http.AndroidHttpClient;
 import android.net.Uri;
 import android.os.Build;
 
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.util.EntityUtils;
-import org.apache.http.client.methods.HttpUriRequest;
 
 import org.json.JSONException;
 import org.json.JSONTokener;
@@ -33,6 +42,10 @@ import com.beastbikes.restful.annotation.HttpDelete;
 import com.beastbikes.restful.annotation.HttpPost;
 import com.beastbikes.restful.annotation.HttpPut;
 import com.beastbikes.restful.annotation.Path;
+import com.beastbikes.restful.annotation.BodyParameter;
+import com.beastbikes.restful.annotation.MatrixParameter;
+import com.beastbikes.restful.annotation.PathParameter;
+import com.beastbikes.restful.annotation.QueryParameter;
 
 class ServiceStubInvocation implements Invocation {
 
@@ -48,12 +61,19 @@ class ServiceStubInvocation implements Invocation {
 
     final AndroidHttpClient client;
 
+    final Map<String, String> headers;
+
     ServiceStubInvocation(final Context context, final Class<?> iface, final Method method, final String baseUrl) {
+        this(context, iface, method, baseUrl, Collections.<String, String>emptyMap());
+    }
+
+    ServiceStubInvocation(final Context context, final Class<?> iface, final Method method, final String baseUrl, final Map<String, String> headers) {
         this.context = context;
         this.iface = iface;
         this.method = method;
         this.baseUrl = baseUrl;
         this.client = AndroidHttpClient.newInstance(buildUserAgent(context), context);
+        this.headers = null == headers ? Collections.<String, String>emptyMap() : headers;
     }
 
     @Override
@@ -85,8 +105,34 @@ class ServiceStubInvocation implements Invocation {
             httpMethod = "GET";
         }
 
-        final HttpUriRequest request;
-        final String url = baseUrl + topPath + path;
+        final List<NameValuePair> queryParams = new ArrayList<NameValuePair>();
+        final Annotation[][] paramAnnotations = method.getParameterAnnotations();
+        if (null != paramAnnotations && paramAnnotations.length > 0) {
+            for (int i = 0; i < paramAnnotations.length; i++) {
+                final String value = String.valueOf(args[i]);
+                final Annotation[] annotations = paramAnnotations[i];
+                if (null != annotations && annotations.length > 0) {
+                    for (final Annotation annotation : annotations) {
+                        if (QueryParameter.class.equals(annotation.annotationType())) {
+                            final String name = ((QueryParameter) annotation).value();
+                            queryParams.add(new BasicNameValuePair(name, value));
+                        }
+                    }
+                }
+            }
+        }
+
+        final StringBuilder queryString = new StringBuilder();
+        if (queryParams.size() > 0) {
+            try {
+                queryString.append("?" + EntityUtils.toString(new UrlEncodedFormEntity(queryParams)));
+            } catch (final Exception e) {
+                logger.error("Encoding query parameters error", e);
+            }
+        }
+
+        final HttpRequestBase request;
+        final String url = baseUrl + topPath + path + queryString;
         final InvocationTarget target = new InvocationTarget(url, httpMethod);
 
         logger.debug(target.toString());
@@ -110,6 +156,13 @@ class ServiceStubInvocation implements Invocation {
         HttpResponse response = null;
 
         try {
+            for (final Map.Entry<String, String> entry : this.headers.entrySet()) {
+                request.setHeader(entry.getKey(), entry.getValue());
+            }
+
+            request.setHeader("User-Agent", buildUserAgent(this.context));
+            request.setHeader("Accept-Language", Locale.getDefault().getLanguage());
+
             if (null == (response = this.client.execute(request))) {
                 throw new InvocationException(target);
             }

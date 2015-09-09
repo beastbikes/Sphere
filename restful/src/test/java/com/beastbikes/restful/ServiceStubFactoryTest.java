@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.beastbikes.restful.annotation.HttpGet;
 import com.beastbikes.restful.annotation.Path;
+import com.beastbikes.restful.annotation.QueryParameter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

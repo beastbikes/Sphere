@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @since 1.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.PARAMETER)
 public @interface MatrixParameter {
 
     /**
