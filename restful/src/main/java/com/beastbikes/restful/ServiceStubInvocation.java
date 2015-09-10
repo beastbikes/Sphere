@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.HttpEntity;
@@ -39,6 +41,7 @@ import org.json.JSONTokener;
 import com.beastbikes.logging.Logger;
 import com.beastbikes.logging.LoggerFactory;
 import com.beastbikes.restful.annotation.HttpDelete;
+import com.beastbikes.restful.annotation.HttpGet;
 import com.beastbikes.restful.annotation.HttpPost;
 import com.beastbikes.restful.annotation.HttpPut;
 import com.beastbikes.restful.annotation.Path;
@@ -80,42 +83,57 @@ class ServiceStubInvocation implements Invocation {
     public Object invoke(final Object... args) throws InvocationException {
         logger.debug("Invoking " + this.iface.getName() + "#" + this.method.getName() + " " + Arrays.toString(args));
 
-        final String topPath;
+        final String svcPath;
         if (this.iface.isAnnotationPresent(Path.class)) {
-            topPath = this.iface.getAnnotation(Path.class).value();
+            svcPath = this.iface.getAnnotation(Path.class).value();
         } else {
-            topPath = "/";
-        }
-
-        final String path;
-        if (this.method.isAnnotationPresent(Path.class)) {
-            path = this.method.getAnnotation(Path.class).value();
-        } else {
-            path = "/";
+            svcPath = "/";
         }
 
         final String httpMethod;
+        final String servicePath;
         if (this.method.isAnnotationPresent(HttpPost.class)) {
             httpMethod = "POST";
+            servicePath = this.method.getAnnotation(HttpPost.class).value();
         } else if (this.method.isAnnotationPresent(HttpPut.class)) {
             httpMethod = "PUT";
+            servicePath = this.method.getAnnotation(HttpPut.class).value();
         } else if (this.method.isAnnotationPresent(HttpDelete.class)) {
             httpMethod = "DELETE";
-        } else {
+            servicePath = this.method.getAnnotation(HttpDelete.class).value();
+        } else if (this.method.isAnnotationPresent(HttpGet.class)) {
             httpMethod = "GET";
+            servicePath = this.method.getAnnotation(HttpGet.class).value();
+        } else {
+            throw new UnsupportedOperationException(this.method.getName() + " does not annotated by any HTTP method");
         }
 
+        final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>();
+        final List<NameValuePair> matrixParams = new ArrayList<NameValuePair>();
+        final List<NameValuePair> pathParams = new ArrayList<NameValuePair>();
         final List<NameValuePair> queryParams = new ArrayList<NameValuePair>();
         final Annotation[][] paramAnnotations = method.getParameterAnnotations();
         if (null != paramAnnotations && paramAnnotations.length > 0) {
             for (int i = 0; i < paramAnnotations.length; i++) {
                 final String value = String.valueOf(args[i]);
                 final Annotation[] annotations = paramAnnotations[i];
+
                 if (null != annotations && annotations.length > 0) {
                     for (final Annotation annotation : annotations) {
-                        if (QueryParameter.class.equals(annotation.annotationType())) {
+                        final Class<?> annotationType = annotation.annotationType();
+
+                        if (QueryParameter.class.equals(annotationType)) {
                             final String name = ((QueryParameter) annotation).value();
                             queryParams.add(new BasicNameValuePair(name, value));
+                        } else if (BodyParameter.class.equals(annotationType)) {
+                            final String name = ((BodyParameter) annotation).value();
+                            bodyParams.add(new BasicNameValuePair(name, value));
+                        } else if (MatrixParameter.class.equals(annotationType)) {
+                            final String name = ((BodyParameter) annotation).value();
+                            matrixParams.add(new BasicNameValuePair(name, value));
+                        } else if (PathParameter.class.equals(annotationType)) {
+                            final String name = ((PathParameter) annotation).value();
+                            pathParams.add(new BasicNameValuePair(name, value));
                         }
                     }
                 }
@@ -125,14 +143,25 @@ class ServiceStubInvocation implements Invocation {
         final StringBuilder queryString = new StringBuilder();
         if (queryParams.size() > 0) {
             try {
-                queryString.append("?" + EntityUtils.toString(new UrlEncodedFormEntity(queryParams)));
+                queryString.append("?" + EntityUtils.toString(new UrlEncodedFormEntity(queryParams, "UTF-8")));
             } catch (final Exception e) {
                 logger.error("Encoding query parameters error", e);
             }
         }
 
+        final String apiPath;
+        if (pathParams.size() > 0) {
+            String path = servicePath;
+            for (final NameValuePair nvp : pathParams) {
+                path = path.replaceAll("\\{" + nvp.getName() + "\\}", nvp.getValue());
+            }
+            apiPath = path;
+        } else {
+            apiPath = servicePath;
+        }
+
         final HttpRequestBase request;
-        final String url = baseUrl + topPath + path + queryString;
+        final String url = baseUrl + svcPath + apiPath + queryString.toString();
         final InvocationTarget target = new InvocationTarget(url, httpMethod);
 
         logger.debug(target.toString());
@@ -156,18 +185,23 @@ class ServiceStubInvocation implements Invocation {
         HttpResponse response = null;
 
         try {
+            request.setHeader("User-Agent", buildUserAgent(this.context));
+            request.setHeader("Accept-Language", Locale.getDefault().getLanguage());
+
             for (final Map.Entry<String, String> entry : this.headers.entrySet()) {
                 request.setHeader(entry.getKey(), entry.getValue());
             }
 
-            request.setHeader("User-Agent", buildUserAgent(this.context));
-            request.setHeader("Accept-Language", Locale.getDefault().getLanguage());
+            if (request instanceof HttpEntityEnclosingRequestBase) {
+                final HttpEntity entity = new UrlEncodedFormEntity(bodyParams, "UTF-8");
+                ((HttpEntityEnclosingRequestBase) request).setEntity(entity);
+            }
 
             if (null == (response = this.client.execute(request))) {
                 throw new InvocationException(target);
             }
-        } catch (final IOException e) {
-            throw new InvocationException(target);
+        } catch (final Exception e) {
+            throw new InvocationException(target, null, e);
         }
 
         final StatusLine status = response.getStatusLine();
