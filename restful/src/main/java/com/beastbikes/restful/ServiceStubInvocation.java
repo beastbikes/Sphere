@@ -25,10 +25,10 @@ import android.net.Uri;
 import android.os.Build;
 
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.NameValuePair;
@@ -62,8 +62,6 @@ class ServiceStubInvocation implements Invocation {
 
     final String baseUrl;
 
-    final AndroidHttpClient client;
-
     final Map<String, String> headers;
 
     ServiceStubInvocation(final Context context, final Class<?> iface, final Method method, final String baseUrl) {
@@ -75,12 +73,21 @@ class ServiceStubInvocation implements Invocation {
         this.iface = iface;
         this.method = method;
         this.baseUrl = baseUrl;
-        this.client = AndroidHttpClient.newInstance(buildUserAgent(context), context);
         this.headers = null == headers ? Collections.<String, String>emptyMap() : headers;
     }
 
     @Override
     public Object invoke(final Object... args) throws InvocationException {
+        final AndroidHttpClient client = AndroidHttpClient.newInstance(buildUserAgent(context), context);
+
+        try {
+            return this.invoke(client, args);
+        } finally {
+            client.close();
+        }
+    }
+
+    private Object invoke(final AndroidHttpClient client, final Object... args) throws InvocationException {
         logger.debug("Invoking " + this.iface.getName() + "#" + this.method.getName() + " " + Arrays.toString(args));
 
         final String svcPath;
@@ -192,12 +199,12 @@ class ServiceStubInvocation implements Invocation {
                 request.setHeader(entry.getKey(), entry.getValue());
             }
 
-            if (request instanceof HttpEntityEnclosingRequestBase) {
+            if (request instanceof HttpEntityEnclosingRequest) {
                 final HttpEntity entity = new UrlEncodedFormEntity(bodyParams, "UTF-8");
-                ((HttpEntityEnclosingRequestBase) request).setEntity(entity);
+                ((HttpEntityEnclosingRequest) request).setEntity(entity);
             }
 
-            if (null == (response = this.client.execute(request))) {
+            if (null == (response = client.execute(request))) {
                 throw new InvocationException(target);
             }
         } catch (final Exception e) {
